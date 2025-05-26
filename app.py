@@ -52,44 +52,94 @@ def chat_with_llm(messages):
 # Streamlit App
 st.title("🏠 Real Estate Chatbot")
 
-user_id = st.text_input("Enter your name or mobile number")
-if user_id:
+# user_id = st.text_input("Enter your name or mobile number")
+# if user_id:
+#     buyer = find_buyer(user_id)
+#     if buyer:
+#         st.success(f"Welcome {buyer['name'].title()}! Let's talk about your property needs.")
+
+#         if "messages" not in st.session_state:
+#             system_prompt = build_system_prompt(buyer)
+#             st.session_state.messages = [{"role": "system", "content": system_prompt}]
+#             st.session_state.chat_history = []
+
+#             # Ask first question after trigger
+#             st.session_state.messages.append({"role": "user", "content": "Please begin asking questions."})
+#             first_question = chat_with_llm(st.session_state.messages)
+#             st.session_state.messages.append({"role": "assistant", "content": first_question})
+#             st.session_state.chat_history.append({"role": "assistant", "content": first_question})
+
+#         # Display chat history
+#         for msg in st.session_state.chat_history:
+#             with st.chat_message(msg["role"]):
+#                 st.markdown(msg["content"])
+
+#         # Wait for user input
+#         if prompt := st.chat_input("Type your reply..."):
+#             # Add user reply
+#             st.session_state.messages.append({"role": "user", "content": prompt})
+#             st.session_state.chat_history.append({"role": "user", "content": prompt})
+
+#             # RENDER all history up to this point
+#             with st.chat_message("user"):
+#                 st.markdown(prompt)
+
+#             # Assistant replies only after rendering
+#             with st.chat_message("assistant"):
+#                 with st.spinner("Thinking..."):
+#                     reply = chat_with_llm(st.session_state.messages)
+#                 st.markdown(reply)
+#                 st.session_state.messages.append({"role": "assistant", "content": reply})
+#                 st.session_state.chat_history.append({"role": "assistant", "content": reply})
+#     else:
+#         st.error("Buyer not found in the database.")
+
+
+
+
+# Prepare buyer options
+buyer_options = ["Select your name or phone number"] + [f"{b['name']} ({b['phone']})" for b in buyers]
+selected_buyer = st.selectbox("Choose your identity", buyer_options)
+
+if selected_buyer != "Select your name or phone number":
+    # Extract phone number from selected option
+    user_id = selected_buyer.split("(")[-1].rstrip(")")
     buyer = find_buyer(user_id)
+
     if buyer:
-        st.success(f"Welcome {buyer['name'].title()}! Let's talk about your property needs.")
+        if st.button("Start Chat"):
+            st.success(f"Welcome {buyer['name'].title()}! Let's talk about your property needs.")
+            
+            if "messages" not in st.session_state:
+                system_prompt = build_system_prompt(buyer)
+                st.session_state.messages = [{"role": "system", "content": system_prompt}]
+                st.session_state.chat_history = []
 
-        if "messages" not in st.session_state:
-            system_prompt = build_system_prompt(buyer)
-            st.session_state.messages = [{"role": "system", "content": system_prompt}]
-            st.session_state.chat_history = []
+                # Trigger first question after button click
+                st.session_state.messages.append({"role": "user", "content": "Please begin asking questions."})
+                first_question = chat_with_llm(st.session_state.messages)
+                st.session_state.messages.append({"role": "assistant", "content": first_question})
+                st.session_state.chat_history.append({"role": "assistant", "content": first_question})
 
-            # Ask first question after trigger
-            st.session_state.messages.append({"role": "user", "content": "Please begin asking questions."})
-            first_question = chat_with_llm(st.session_state.messages)
-            st.session_state.messages.append({"role": "assistant", "content": first_question})
-            st.session_state.chat_history.append({"role": "assistant", "content": first_question})
+        # Show chat history and chat input after "Start Chat" is pressed
+        if "messages" in st.session_state:
+            for msg in st.session_state.chat_history:
+                with st.chat_message(msg["role"]):
+                    st.markdown(msg["content"])
 
-        # Display chat history
-        for msg in st.session_state.chat_history:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
+            if prompt := st.chat_input("Type your reply..."):
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                st.session_state.chat_history.append({"role": "user", "content": prompt})
 
-        # Wait for user input
-        if prompt := st.chat_input("Type your reply..."):
-            # Add user reply
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            st.session_state.chat_history.append({"role": "user", "content": prompt})
+                with st.chat_message("user"):
+                    st.markdown(prompt)
 
-            # RENDER all history up to this point
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            # Assistant replies only after rendering
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    reply = chat_with_llm(st.session_state.messages)
-                st.markdown(reply)
-                st.session_state.messages.append({"role": "assistant", "content": reply})
-                st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        reply = chat_with_llm(st.session_state.messages)
+                    st.markdown(reply)
+                    st.session_state.messages.append({"role": "assistant", "content": reply})
+                    st.session_state.chat_history.append({"role": "assistant", "content": reply})
     else:
         st.error("Buyer not found in the database.")
+
